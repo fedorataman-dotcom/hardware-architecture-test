@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function teacher() {
+      return request.auth != null
+        && request.auth.token.email == 'fedorataman@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+    function validScores(scores) {
+      return scores is map
+        && scores.keys().hasOnly(['25', '26', '27', '28', '29', '30'])
+        && (!('25' in scores) || (scores['25'] is int && scores['25'] >= 0 && scores['25'] <= 6))
+        && (!('26' in scores) || (scores['26'] is int && scores['26'] >= 0 && scores['26'] <= 6))
+        && (!('27' in scores) || (scores['27'] is int && scores['27'] >= 0 && scores['27'] <= 6))
+        && (!('28' in scores) || (scores['28'] is int && scores['28'] >= 0 && scores['28'] <= 6))
+        && (!('29' in scores) || (scores['29'] is int && scores['29'] >= 0 && scores['29'] <= 6))
+        && (!('30' in scores) || (scores['30'] is int && scores['30'] >= 0 && scores['30'] <= 6));
+    }
+    match /answerKeys/{variantId} {
+      allow read, create, update: if teacher();
+      allow delete: if false;
+    }
+    match /submissions/{submissionId} {
+      allow create: if
+        request.resource.data.keys().hasAll(['studentName', 'groupName', 'variantId', 'answers', 'submittedAt', 'manualScores', 'teacherNote', 'gradedAt'])
+        && request.resource.data.keys().hasOnly(['studentName', 'groupName', 'variantId', 'answers', 'submittedAt', 'manualScores', 'teacherNote', 'gradedAt'])
+        && request.resource.data.studentName is string
+        && request.resource.data.studentName.size() > 0
+        && request.resource.data.studentName.size() <= 100
+        && request.resource.data.groupName is string
+        && request.resource.data.groupName.size() > 0
+        && request.resource.data.groupName.size() <= 60
+        && request.resource.data.variantId in [1, 2, 3, 4]
+        && request.resource.data.answers is map
+        && request.resource.data.answers.keys().hasAll(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'])
+        && request.resource.data.answers.keys().hasOnly(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'])
+        && request.resource.data.submittedAt == request.time
+        && request.resource.data.manualScores == {}
+        && request.resource.data.teacherNote == ''
+        && request.resource.data.gradedAt == null;
+      allow read: if teacher();
+      allow update: if teacher()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['manualScores', 'teacherNote', 'gradedAt'])
+        && validScores(request.resource.data.manualScores)
+        && request.resource.data.teacherNote is string
+        && request.resource.data.teacherNote.size() <= 4000
+        && (request.resource.data.gradedAt == null || request.resource.data.gradedAt == request.time);
+      allow delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
