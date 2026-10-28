@@ -52,7 +52,7 @@
           ${configured?'':'<p class="error-box">Приём работ ещё не настроен. Преподавателю нужно подключить Firebase.</p>'}
           <div class="actions"><button class="btn btn-primary" type="submit" ${configured?'':'disabled'}>Начать тест →</button><span class="small subtle">До сдачи прогресс сохраняется в этом браузере.</span></div>
         </form>
-      </section>`;
+      </section><p class="switch-test"><a class="btn btn-outline" href="os.html">Открыть тест по операционным системам</a></p>`;
     document.getElementById('start-form').addEventListener('submit', event => {
       event.preventDefault();
       const form = event.currentTarget;
@@ -123,7 +123,7 @@
       const backend=await window.QUIZ_BACKEND_READY;
       if(!backend?.configured) throw new Error('Firebase не настроен. Сообщите преподавателю.');
       const answers=Object.fromEntries(variant().questions.map(q=>[String(q.number),String(answer(q.number)).slice(0,q.number<=24?1:5000)]));
-      const id=await backend.submitAttempt({studentName:state.name,groupName:state.group,variantId:state.variantId,answers});
+      const id=await backend.submitAttempt({testId:'hardware',studentName:state.name,groupName:state.group,variantId:state.variantId,answers});
       state.submissionId=id;
       state.submittedAt=Date.now();
       save(); render(); window.scrollTo(0,0);

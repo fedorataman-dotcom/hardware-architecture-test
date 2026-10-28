@@ -12,6 +12,7 @@ if (configured) {
     async submitAttempt(attempt) {
       const id = crypto.randomUUID();
       await setDoc(doc(collection(db, 'submissions'), id), {
+        testId: attempt.testId || 'hardware',
         studentName: attempt.studentName,
         groupName: attempt.groupName,
         variantId: attempt.variantId,
